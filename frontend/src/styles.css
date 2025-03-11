@@ -1,0 +1,196 @@
+/* Global styles */
+body {
+    margin: 0;
+    font-family: 'Arial', sans-serif;
+    transition: background-color 0.3s, color 0.3s; /* Smooth transition */
+}
+
+/* Light mode styles */
+.light-mode {
+    background-color: #f0f0f0; /* Light background */
+    color: #333; /* Dark text */
+}
+
+/* Dark mode styles */
+.dark-mode {
+    background-color: #1a1a1a; /* Dark background */
+    color: #f0f0f0; /* Light text */
+}
+
+/* Navbar styles */
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 30px;
+    background-color: #007bff; /* Primary color */
+    color: white;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.logo {
+    height: 40px; /* Adjust logo height */
+}
+
+.navbar-right {
+    display: flex;
+    align-items: center;
+}
+
+.theme-toggle {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 24px; /* Larger icon size */
+    cursor: pointer;
+    margin-right: 20px;
+    transition: transform 0.2s;
+}
+
+.theme-toggle:hover {
+    transform: scale(1.1); /* Slightly enlarge on hover */
+}
+
+.user-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: white;
+    color: #007bff; /* Match primary color */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: bold;
+    font-size: 18px; /* Adjust font size */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Document Uploader styles */
+.document-uploader {
+    padding: 20px;
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    margin: 20px;
+    max-width: 600px; /* Max width for the uploader */
+    margin: 20px auto; /* Center the uploader */
+}
+
+.pdf-viewer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 20px;
+    width: 100%; /* Full width */
+}
+
+.pdf-viewer .react-pdf__Page {
+    width: 100%; /* Ensure the PDF page takes full width */
+    max-width: 600px; /* Limit the max width */
+    margin: 0 auto; /* Center the page */
+}
+
+.navigation {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    margin-top: 10px;
+}
+
+.nav-button {
+    background-color: #007bff; /* Primary button color */
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s, transform 0.2s;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2); /* Add shadow for depth */
+}
+
+.nav-button:disabled {
+    background-color: #ccc; /* Gray */
+    cursor: not-allowed;
+}
+
+.nav-button:hover:not(:disabled) {
+    background-color: #0056b3; /* Darker shade on hover */
+    transform: scale(1.05); /* Slightly enlarge on hover */
+}
+
+.error {
+    color: red;
+    margin-top: 10px;
+}
+
+/* Input styles */
+input[type="file"] {
+    margin: 10px 0;
+    padding: 10px;
+    border: 1px solid #ccc; /* Light border */
+    border-radius: 5px; /* Rounded corners */
+    width: 100%; /* Full width */
+}
+
+/* Responsive styles */
+@media (max-width: 768px) {
+    .document-uploader {
+        width: 90%; /* Full width on smaller screens */
+    }
+
+    .navbar {
+        flex-direction: column; /* Stack items on smaller screens */
+        align-items: flex-start; /* Align items to the start */
+    }
+
+    .navbar-right {
+        margin-top: 10px; /* Add space between navbar items */
+    }
+
+    .pdf-viewer .react-pdf__Page {
+        max-width: 100%; /* Ensure the PDF page fits on smaller screens */
+    }
+
+    .nav-button {
+        width: 100%; /* Full width buttons on smaller screens */
+        margin: 5px 0; /* Space between buttons */
+    }
+}
+
+/* Additional styles for better aesthetics */
+h2 {
+    font-size: 24px; /* Heading size */
+    color: #007bff; /* Primary color for headings */
+}
+
+h3 {
+    font-size: 20px; /* Subheading size */
+    color: #333; /* Dark text for subheadings */
+}
+
+ul {
+    list-style-type: none; /* Remove default list styles */
+    padding: 0; /* Remove padding */
+}
+
+li {
+    margin: 5px 0; /* Space between list items */
+}
+
+/* Footer styles (if you have a footer) */
+footer {
+    text-align: center;
+    padding: 20px;
+    background-color: #007bff; /* Primary color */
+    color: white;
+    position: relative;
+    bottom: 0;
+    width: 100%;
+}
+
+footer p {
+    margin: 0; /* Remove default margin */
+    font-size: 14px; /* Font size for footer text */
+}

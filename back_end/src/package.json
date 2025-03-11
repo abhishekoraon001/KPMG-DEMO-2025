@@ -1,0 +1,15 @@
+{
+    "name": "ocr-app",
+    "version": "1.0.0",
+    "main": "app.js",
+    "scripts": {
+        "start": "node app.js"
+    },
+    "dependencies": {
+        "@google-cloud/documentai": "^8.12.0",
+        "cors": "^2.8.5",
+        "dotenv": "^x.x.x",
+        "express": "^x.x.x",
+        "multer": "^x.x.x"
+    }
+}
