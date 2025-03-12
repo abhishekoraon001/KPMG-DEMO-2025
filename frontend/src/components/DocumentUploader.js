@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
+import 'react-pdf/dist/Page/AnnotationLayer.css';
+import 'react-pdf/dist/Page/TextLayer.css';
 import { Button, Typography, Box, Alert, Grid, Slider, Tabs, Tab, List, ListItem, ListItemText } from '@mui/material';
 import axios from 'axios';
 import Papa from 'papaparse'; // Import PapaParse for CSV conversion
 import './DocumentUploader.css';
 
-pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/legacy/build/pdf.worker.min.js`;
+pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@4.8.69/legacy/build/pdf.worker.min.mjs`;
 
 const DocumentUploader = () => {
     const [file, setFile] = useState(null);
@@ -17,7 +19,6 @@ const DocumentUploader = () => {
     const [uploadStatus, setUploadStatus] = useState('');
     const [tabValue, setTabValue] = useState(0); // State for tab selection
     const [keyValuePairs, setKeyValuePairs] = useState([]); // State for key-value pairs
-    const [canDownload,setCanDownload] = useState(false);
 
     const handleFileChange = async (e) => {
         const uploadedFile = e.target.files[0];
@@ -69,7 +70,6 @@ const DocumentUploader = () => {
             const text = response.data; // Adjust based on your API response structure
             setKeyValuePairs(text);
             setUploadStatus('File uploaded successfully!');
-            setCanDownload(true);
         } catch (error) {
             console.error('Error fetching key-value pairs:', error);
             setError('Failed to fetch key-value pairs. Please try again.');
@@ -98,8 +98,7 @@ const DocumentUploader = () => {
     };
 
     const downloadCSV = (data) => {
-        console.log(data,"csvdata")
-        const csv = Papa.unparse(data.map(line => {
+        const csv = Papa.unparse(data.split('\n').map(line => {
             const [key, value] = line.split(':');
             return { key: key.trim(), value: value ? value.trim() : '' };
         }));
@@ -133,7 +132,6 @@ const DocumentUploader = () => {
 
     const handleTabChange = async (event, newValue) => {
         setTabValue(newValue);
-        setCanDownload(false);
         if (newValue === 1) { // If the Key-Value Pairs tab is selected
             await handleFormParse(file);
         }
@@ -235,8 +233,8 @@ const DocumentUploader = () => {
                                             border: '1px solid #ccc',
                                             borderRadius: 1,
                                             padding: 2,
-                                            backgroundColor: '#e9ecef', // Light green background
-                                            color: '#343a40', // Dark green text
+                                            backgroundColor: '#e8f5e9', // Light green background
+                                            color: '#2e7d32', // Dark green text
                                             boxShadow: '0 2px 4px rgba(0,0,0,0.1)', // Add shadow
                                         }}
                                     >
@@ -259,8 +257,8 @@ const DocumentUploader = () => {
                                             border: '1px solid #ccc',
                                             borderRadius: 1,
                                             padding: 2,
-                                            backgroundColor: '#e9ecef', // Light green background
-                                            color: '#343a40', // Dark green text
+                                            backgroundColor: '#e8f5e9', // Light green background
+                                            color: '#2e7d32', // Dark green text
                                             boxShadow: '0 2px 4px rgba(0,0,0,0.1)', // Add shadow
                                         }}
                                     >
