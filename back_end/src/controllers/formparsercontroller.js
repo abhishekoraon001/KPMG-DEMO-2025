@@ -13,17 +13,17 @@ function extractFormFields(data) {
   // Safely navigate through the nested structure
   mapdata?.map(elem=>{
     elem.formFields.map(key1=>{
-      const keye = key1?.fieldName?.textAnchor?.content;
-      const valuei = key1?.fieldValue?.textAnchor?.content;
+      const keye = (key1?.fieldName?.textAnchor?.content.replace(':', '').replace(/[\r\n]+/g,''))?key1?.fieldName?.textAnchor?.content.replace(':', ''):"";
+      const valuei = (key1?.fieldValue?.textAnchor?.content)?(key1?.fieldValue?.textAnchor?.content):"";
       result.push({
-        key: keye ? keye:"",
-        value:valuei? valuei:""
+        key: keye ? keye.replace(/[\r\n]+/g,''):"",
+        value:valuei.replace(/[\r\n]+/g,'')? valuei:""
       })
     })
    });
 
   
-  
+  console.log(result,"result")
   return result;
 }
 
