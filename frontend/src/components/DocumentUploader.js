@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
-import { Button, Typography, Box, Alert, Grid, Slider, Tabs, Tab, List, ListItem, ListItemText } from '@mui/material';
+import { Button, Typography, Box, Alert, Grid, Slider, Tabs, Tab, CircularProgress} from '@mui/material';
 import axios from 'axios';
 import Papa from 'papaparse'; // Import PapaParse for CSV conversion
 import './DocumentUploader.css';
@@ -19,6 +19,8 @@ const DocumentUploader = () => {
     const [uploadStatus, setUploadStatus] = useState('');
     const [tabValue, setTabValue] = useState(0); // State for tab selection
     const [keyValuePairs, setKeyValuePairs] = useState([]); // State for key-value pairs
+    const [ocrloading, setOcrLoading] = useState(false); 
+    const [keyvalueloading, setKeyValueLoading] = useState(false);// Loading state
 
     const handleFileChange = async (e) => {
         const uploadedFile = e.target.files[0];
@@ -28,7 +30,10 @@ const DocumentUploader = () => {
             setPageNumber(1);
             setExtractedText(''); // Reset extracted text on new file upload
             setKeyValuePairs([]); // Reset key-value pairs on new file upload
-            await handleOCR(uploadedFile); // Call OCR API immediately after file upload
+            setOcrLoading(true); 
+            setKeyValueLoading(true);// Set loading to true
+            await handleOCR(uploadedFile);
+            await handleFormParse(uploadedFile); // Call OCR API immediately after file upload
         } else {
             setError('Please upload a valid PDF file.');
             setFile(null);
@@ -53,6 +58,8 @@ const DocumentUploader = () => {
             console.error('Error extracting text:', error);
             setError('Failed to extract text. Please try again.');
             setUploadStatus('Error uploading file.');
+        } finally {
+            setOcrLoading(false); // Set loading to false after fetching
         }
     };
 
@@ -74,6 +81,8 @@ const DocumentUploader = () => {
             console.error('Error fetching key-value pairs:', error);
             setError('Failed to fetch key-value pairs. Please try again.');
             setUploadStatus('Error uploading file.');
+        } finally {
+            setKeyValueLoading(false) // Set loading to false after fetching
         }
     };
 
@@ -97,19 +106,25 @@ const DocumentUploader = () => {
         setScale(newValue);
     };
 
-    const downloadCSV = (data) => {
-        const csv = Papa.unparse(data.split('\n').map(line => {
-            const [key, value] = line.split(':');
-            return { key: key.trim(), value: value ? value.trim() : '' };
-        }));
+    const downloadCSV = (data, e) => {
+        console.log(data);
+        const csv = Papa.unparse(data);
+
+        // Create a blob from the CSV string
         const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+
+        // Create a link element
         const link = document.createElement('a');
         const url = URL.createObjectURL(blob);
         link.setAttribute('href', url);
-        link.setAttribute('download', 'extracted_text.csv');
+        link.setAttribute('download', file.name.replace('.', '_') + '_keyValuePairs.csv');
         link.style.visibility = 'hidden';
+
+        // Append the link to the body
         document.body.appendChild(link);
+        // Trigger the download
         link.click();
+        // Remove the link from the document
         document.body.removeChild(link);
     };
 
@@ -132,9 +147,45 @@ const DocumentUploader = () => {
 
     const handleTabChange = async (event, newValue) => {
         setTabValue(newValue);
-        if (newValue === 1) { // If the Key-Value Pairs tab is selected
-            await handleFormParse(file);
-        }
+    };
+
+    // Component to display each line of extracted text
+    const TextLine = ({ text }) => {
+        return (
+            <Box
+                sx={{
+                    border: '1px solid #ccc',
+                    borderRadius: 1,
+                    padding: 1,
+                    marginBottom: 1, // Small gap between components
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                    backgroundColor: '#f9f9f9', // Light background for better visibility
+                }}
+            >
+                <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
+                    {text}
+                </Typography>
+            </Box>
+        );
+    };
+
+    // Component to display all extracted text
+    const ExtractedTextDisplay = ({ extractedText }) => {
+        const lines = extractedText.split('\n\n'); // Split text into lines
+
+        return (
+            <Box sx={{ maxHeight: '300px', overflowY: 'auto', padding: 1 }}>
+                {ocrloading ? (
+                    <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+                        <CircularProgress color="primary" />
+                    </Box>
+                ) : (
+                    lines.map((line, index) => (
+                        <TextLine key={index} text={line} />
+                    ))
+                )}
+            </Box>
+        );
     };
 
     return (
@@ -226,22 +277,7 @@ const DocumentUploader = () => {
                                     <Typography variant="h6" gutterBottom>
                                         Extracted Text
                                     </Typography>
-                                    <Box
-                                        sx={{
-                                            maxHeight: '300px',
-                                            overflowY: 'auto',
-                                            border: '1px solid #ccc',
-                                            borderRadius: 1,
-                                            padding: 2,
-                                            backgroundColor: '#e8f5e9', // Light green background
-                                            color: '#2e7d32', // Dark green text
-                                            boxShadow: '0 2px 4px rgba(0,0,0,0.1)', // Add shadow
-                                        }}
-                                    >
-                                        <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap', textShadow: '1px 1px 2px rgba(0,0,0,0.2)' }}>
-                                            {extractedText || 'No text extracted yet.'}
-                                        </Typography>
-                                    </Box>
+                                    <ExtractedTextDisplay extractedText={extractedText} /> {/* Use the new component */}
                                 </Box>
                             )}
 
@@ -257,24 +293,25 @@ const DocumentUploader = () => {
                                             border: '1px solid #ccc',
                                             borderRadius: 1,
                                             padding: 2,
-                                            backgroundColor: '#e8f5e9', // Light green background
-                                            color: '#2e7d32', // Dark green text
+                                            backgroundColor: '#f9f9f9', // Light background
                                             boxShadow: '0 2px 4px rgba(0,0,0,0.1)', // Add shadow
                                         }}
                                     >
-                                        {keyValuePairs.length > 0 ? (
-                                            <List>
-                                                {keyValuePairs.map((pair, index) => (
-                                                    <ListItem key={index} sx={{ border: '1px solid #ccc', borderRadius: 1, marginBottom: 1, boxShadow: 1 }}>
-                                                        <ListItemText primary={`${pair.key}: ${pair.value}`} />
-                                                    </ListItem>
-                                                ))}
-                                            </List>
+                                        {keyvalueloading ? (
+                                            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+                                                <CircularProgress color="primary" />
+                                            </Box>
                                         ) : (
-                                            <Typography variant="body2">No key-value pairs extracted yet.</Typography>
+                                            keyValuePairs.length > 0 ? (
+                                                keyValuePairs.map((pair, index) => (
+                                                    <TextLine key={index} text={`${pair.key}: ${pair.value}`} /> // Use TextLine for key-value pairs
+                                                ))
+                                            ) : (
+                                                <Typography variant="body2">No key-value pairs extracted yet.</Typography>
+                                            )
                                         )}
                                     </Box>
-                                    <Button variant="contained" color="primary" onClick={downloadCSV} sx={{ marginTop: 2 }}>
+                                    <Button variant="contained" color="primary" onClick={(e) => { downloadCSV(keyValuePairs, e) }} sx={{ marginTop: 2 }}>
                                         Export to CSV
                                     </Button>
                                 </Box>
