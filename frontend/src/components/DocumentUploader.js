@@ -24,7 +24,10 @@ const DocumentUploader = () => {
 
     const handleFileChange = async (e) => {
         const uploadedFile = e.target.files[0];
-        if (uploadedFile && uploadedFile.type === 'application/pdf') {
+        setError('');
+        setUploadStatus('');
+        if (uploadedFile  && (uploadedFile.type === 'application/pdf' || uploadedFile.type  === 'image/jpeg' ||
+            uploadedFile.type === 'image/png'  )) {
             setFile(uploadedFile);
             setError('');
             setPageNumber(1);
@@ -32,10 +35,11 @@ const DocumentUploader = () => {
             setKeyValuePairs([]); // Reset key-value pairs on new file upload
             setOcrLoading(true); 
             setKeyValueLoading(true);// Set loading to true
+           
             await handleOCR(uploadedFile);
             await handleFormParse(uploadedFile); // Call OCR API immediately after file upload
         } else {
-            setError('Please upload a valid PDF file.');
+            setError('Please upload a valid PDF/image file.');
             setFile(null);
         }
     };
@@ -196,7 +200,7 @@ const DocumentUploader = () => {
             <Box sx={{ display: 'flex', justifyContent: 'center', margin: '20px 0' }}>
                 <input
                     type="file"
-                    accept=".pdf"
+                    // accept=".pdf"
                     onChange={handleFileChange}
                     style={{
                         margin: '0 10px',
@@ -257,9 +261,13 @@ const DocumentUploader = () => {
 
                             {/* PDF Document Display */}
                             <Box sx={{ flex: 1, overflowY: 'auto', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                                <Document file={file} onLoadSuccess={onDocumentLoadSuccess}>
+                                {file.type === 'application/pdf'? (
+                                    <Document file={file} onLoadSuccess={onDocumentLoadSuccess}>
                                     <Page pageNumber={pageNumber} scale={scale} />
                                 </Document>
+                                )
+                            :  <img src={URL.createObjectURL(file)} alt="Displayed" style={{ maxWidth: '100%', height: 'auto' }} />
+                            }
                             </Box>
                         </Box>
                     </Grid>
