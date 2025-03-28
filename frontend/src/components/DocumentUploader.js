@@ -3,6 +3,7 @@ import { Document, Page, pdfjs } from 'react-pdf';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
 import { Button, Typography, Box, Alert, Grid, Slider, Tabs, Tab, CircularProgress} from '@mui/material';
+import DescriptionIcon from '@mui/icons-material/Description';
 import axios from 'axios';
 import Papa from 'papaparse'; // Import PapaParse for CSV conversion
 import './DocumentUploader.css';
@@ -21,21 +22,35 @@ const DocumentUploader = () => {
     const [keyValuePairs, setKeyValuePairs] = useState([]); // State for key-value pairs
     const [ocrloading, setOcrLoading] = useState(false); 
     const [keyvalueloading, setKeyValueLoading] = useState(false);// Loading state
+    const [awsFileName,setAwsFileName] = useState('');
+    const [keyValueCsv,setKeyValueCsv] = useState('');
+    const [extractedTextCsv,setExtractedTextCsv] = useState('');
+    const [demoFileUploaded,setDemoFileUploaded] = useState(false);
+    var awsFileName1 ='';
 
     const handleFileChange = async (e) => {
-        const uploadedFile = e.target.files[0];
+         console.log(e);
+         
+        var uploadedFile = null;
+       
+          uploadedFile=e.target.files[0];
+        
         setError('');
         setUploadStatus('');
+        
         if (uploadedFile  && (uploadedFile.type === 'application/pdf' || uploadedFile.type  === 'image/jpeg' ||
             uploadedFile.type === 'image/png'  )) {
             setFile(uploadedFile);
             setError('');
+            setAwsFileName('');
             setPageNumber(1);
             setExtractedText(''); // Reset extracted text on new file upload
             setKeyValuePairs([]); // Reset key-value pairs on new file upload
             setOcrLoading(true); 
             setKeyValueLoading(true);// Set loading to true
-           
+            console.log(uploadedFile.name.split('.').slice(0, -1));
+            setAwsFileName(uploadedFile.name.split('.').slice(0, -1));
+           awsFileName1=uploadedFile.name.split('.').slice(0, -1);
             await handleOCR(uploadedFile);
             await handleFormParse(uploadedFile); // Call OCR API immediately after file upload
         } else {
@@ -43,19 +58,48 @@ const DocumentUploader = () => {
             setFile(null);
         }
     };
+    const handleDemoFiles = async (e) => {
+      //getting the demom file
+      setDemoFileUploaded(true);
+      const endPoint = 'http://localhost:8080/api/files/'+'sample-paystub.png';
+      console.log(endPoint);
+      var response= null;
+
+      try {
+        response = await axios.get(endPoint, {
+            responseType: 'blob' // Set the response type to 'blob'
+        });
+        console.log(response);
+
+        // Create a Blob from the response data
+        const blob = new Blob([response.data], { type: response.data.type });
+
+        // Create a File from the Blob
+        const uploadedFile = new File([blob], 'sample-paystub.png', { type: response.data.type });
+
+        // Call handleFileChange with the newly created File object
+        await handleFileChange({ target: { files: [uploadedFile] } });
+         
+      } catch (error) {
+          console.error(error);
+          setError('Failed to fetch demo file. Please try again.');
+         
+      } finally {
+          setOcrLoading(false); // Set loading to false after fetching
+      }
+    }
 
     const handleOCR = async (uploadedFile) => {
-        const formData = new FormData();
-        formData.append('image', uploadedFile); // Append the file to the form data
+        // const formData = new FormData();
+        // formData.append('image', uploadedFile); // Append the file to the form data
+        const endPoint = 'http://localhost:8080/api/files/rawtext-'+awsFileName1+'.txt';
+        console.log(endPoint);
+        var response= null;
 
         try {
-            const response = await axios.post('http://localhost:8080/api/ocr', formData, {
-                headers: {
-                    'Content-Type': 'multipart/form-data',
-                },
-            });
+           response = await axios.get(endPoint);
             console.log(response);
-            const text = response.data.text; // Adjust based on your API response structure
+            const text = response.data; // Adjust based on your API response structure
             setExtractedText(text);
             setUploadStatus('File uploaded successfully!');
         } catch (error) {
@@ -70,17 +114,37 @@ const DocumentUploader = () => {
     const handleFormParse = async (uploadedFile) => {
         const formData = new FormData();
         formData.append('image', uploadedFile); // Append the file to the form data
-        console.log("formparse file", uploadedFile);
+        // console.log("formparse file", uploadedFile);
+        console.log(awsFileName1);
+        
+        // try {
+        //     const response = await axios.post('http://localhost:8080/api/formparse', formData, {
+        //         headers: {
+        //             'Content-Type': 'multipart/form-data',
+        //         },
+        //     });
+        //     console.log(response);
+        //     const text = response.data; // Adjust based on your API response structure
+        //     setKeyValuePairs(text);
+        //     setUploadStatus('File uploaded successfully!');
+        // } catch (error) {
+        //     console.error('Error fetching key-value pairs:', error);
+        //     setError('Failed to fetch key-value pairs. Please try again.');
+        //     setUploadStatus('Error uploading file.');
+        // } finally {
+        //     setKeyValueLoading(false) // Set loading to false after fetching
+        // }
+        const endPoint = 'http://localhost:8080/api/files/keyvalues-'+awsFileName1+'.csv';
+        console.log(endPoint);
+        var response= null;
+        
         try {
-            const response = await axios.post('http://localhost:8080/api/formparse', formData, {
-                headers: {
-                    'Content-Type': 'multipart/form-data',
-                },
-            });
-            console.log(response);
-            const text = response.data; // Adjust based on your API response structure
-            setKeyValuePairs(text);
-            setUploadStatus('File uploaded successfully!');
+            response = await axios.get(endPoint);
+            // console.log(response);
+            setKeyValueCsv(response.data);
+            // const text = response.data; // Adjust based on your API response structure
+            // setKeyValuePairs(text);
+            // setUploadStatus('File uploaded successfully!');
         } catch (error) {
             console.error('Error fetching key-value pairs:', error);
             setError('Failed to fetch key-value pairs. Please try again.');
@@ -88,7 +152,28 @@ const DocumentUploader = () => {
         } finally {
             setKeyValueLoading(false) // Set loading to false after fetching
         }
+      
+         setKeyValuePairs(parseData(response.data));
+     
+
     };
+    
+    const parseData = (data) => {
+       
+        
+        const lines = data.trim().split('\n');
+        const result = [];
+    
+        lines.forEach(line => {
+            const [key, value] = line.split(',').map(item => item.trim());
+            result.push({ key, value });
+        });
+        // console.log(result);
+            
+        return result;
+            
+       
+    }
 
     const onDocumentLoadSuccess = ({ numPages }) => {
         setNumPages(numPages);
@@ -110,12 +195,14 @@ const DocumentUploader = () => {
         setScale(newValue);
     };
 
-    const downloadCSV = (data, e) => {
-        console.log(data);
-        const csv = Papa.unparse(data);
+    const downloadCSV = () => {
+      
+
+        // console.log(data);
+        // const csv = Papa.unparse(response.data);
 
         // Create a blob from the CSV string
-        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const blob = new Blob([keyValueCsv], { type: 'text/csv;charset=utf-8;' });
 
         // Create a link element
         const link = document.createElement('a');
@@ -137,7 +224,7 @@ const DocumentUploader = () => {
         const link = document.createElement('a');
         const url = URL.createObjectURL(blob);
         link.setAttribute('href', url);
-        link.setAttribute('download', 'extracted_text.txt');
+        link.setAttribute('download', `${awsFileName1}_extracted_text.txt`);
         link.style.visibility = 'hidden';
         document.body.appendChild(link);
         link.click();
@@ -175,8 +262,9 @@ const DocumentUploader = () => {
 
     // Component to display all extracted text
     const ExtractedTextDisplay = ({ extractedText }) => {
-        const lines = extractedText.split('\n\n'); // Split text into lines
-
+        const lines = extractedText.split('\n'); // Split text into lines
+        console.log(lines);
+        
         return (
             <Box sx={{ maxHeight: '300px', overflowY: 'auto', padding: 1 }}>
                 {ocrloading ? (
@@ -215,7 +303,7 @@ const DocumentUploader = () => {
             </Box>
             {error && <Alert severity="error">{error}</Alert>}
             {uploadStatus && <Alert severity="success">{uploadStatus}</Alert>}
-            {file && (
+            {(file ) && (
                 <Grid container spacing={2}>
                     <Grid item xs={8}>
                         <Box
@@ -269,7 +357,9 @@ const DocumentUploader = () => {
                             :  <img src={URL.createObjectURL(file)} alt="Displayed" style={{ maxWidth: '100%', height: 'auto' }} />
                             }
                             </Box>
+                           
                         </Box>
+                       
                     </Grid>
                     <Grid item xs={4}>
                         <Box sx={{ padding: 2, backgroundColor: '#fff', borderRadius: 2, boxShadow: 1 }}>
@@ -285,7 +375,11 @@ const DocumentUploader = () => {
                                     <Typography variant="h6" gutterBottom>
                                         Extracted Text
                                     </Typography>
+                                    
                                     <ExtractedTextDisplay extractedText={extractedText} /> {/* Use the new component */}
+                                    <Button variant="contained" color="primary" onClick={(e) => { downloadTXT(extractedText, e) }} sx={{ marginTop: 2 }}>
+                                        Export to CSV
+                                    </Button>
                                 </Box>
                             )}
 
@@ -339,7 +433,44 @@ const DocumentUploader = () => {
                     </Grid>
                 </Grid>
             )}
+            {!file && (
+           <Box
+            sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center', // Center horizontally
+                justifyContent: 'center', // Center vertically
+                height: '40vh', // Full height of the viewport
+                textAlign: 'center', // Center text
+            }}
+        >
+            <Typography 
+                variant="body2" // Use a smaller text variant
+                sx={{ 
+                    color: '#757575', // Set text color to light grey
+                    marginBottom: 2 // Add some space below the text
+                }}
+            >
+                Don't have a document? Try one of our samples.
+            </Typography>
+
+            {uploadStatus === '' && (
+                <Button 
+                    variant="contained" 
+                    color="primary" 
+                    startIcon={<DescriptionIcon />}
+                    onClick={handleDemoFiles}
+                    sx={{ 
+                        marginTop: 1 // Add some space above the button
+                    }}
+                >
+                    PaySlip
+                </Button>
+            )}
         </Box>
+)}
+        </Box>
+        
     );
 };
 
